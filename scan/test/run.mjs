@@ -160,16 +160,24 @@ async function openPage(browser, { width = 390, height = 844, intercept = true, 
   page.on("console", (m) => m.type() === "error" && state.errors.push(m.text()));
   page.on("request", (r) => contacted.add(new URL(r.url()).host || new URL(r.url()).protocol));
   if (intercept) {
+    // Only the requests to the resolvers are intercepted, through Chrome's Fetch domain with URL
+    // patterns; every other request, including those of the decoder's worker, is never paused.
+    // (Puppeteer's request interception pauses all requests, and a request of a starting worker can
+    // remain paused after it is continued, which stops the decoder from loading.)
     await page.setBypassServiceWorker(true);
-    await page.setRequestInterception(true);
-    page.on("request", (request) => {
-      const u = new URL(request.url());
-      if (!RESOLVERS.includes(u.host)) return void request.continue();
-      const reply = dnsReply(Buffer.from(u.searchParams.get("dns") ?? "", "base64url"), state.dns);
+    const client = await page.createCDPSession();
+    client.on("Fetch.requestPaused", ({ requestId, request }) => {
+      const reply = dnsReply(Buffer.from(new URL(request.url).searchParams.get("dns") ?? "", "base64url"), state.dns);
       state.queries.push(reply.qname);
-      const headers = { "access-control-allow-origin": "*", "content-type": "application/dns-message" };
-      void request.respond(reply.status === 200 ? { status: 200, headers, body: reply.body } : { status: reply.status, headers: { "access-control-allow-origin": "*" }, body: "" });
+      const ok = reply.status === 200;
+      void client.send("Fetch.fulfillRequest", {
+        requestId,
+        responseCode: reply.status,
+        responseHeaders: [{ name: "access-control-allow-origin", value: "*" }, ...(ok ? [{ name: "content-type", value: "application/dns-message" }] : [])],
+        body: ok ? Buffer.from(reply.body).toString("base64") : "",
+      });
     });
+    await client.send("Fetch.enable", { patterns: RESOLVERS.map((host) => ({ urlPattern: `https://${host}/*` })) });
   }
   await page.goto(url + query, { waitUntil: "networkidle0" });
   await screen(page, ["home"]);
