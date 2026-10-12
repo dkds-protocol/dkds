@@ -1,0 +1,323 @@
+/* ===========================================================================
+   scan.dkds.org. Colours, type and motion come from brand/tokens.css, which
+   the build places first.
+   =========================================================================== */
+
+:root{
+  --bar-h: 56px;
+  --gutter: 16px;
+  --col: 680px;
+}
+@media (min-width:640px){ :root{ --gutter: 24px; } }
+
+*, *::before, *::after{ box-sizing:border-box; }
+html{ -webkit-text-size-adjust:100%; }
+body{
+  margin:0; min-height:100vh; min-height:100dvh; display:flex; flex-direction:column;
+  background:var(--paper); color:var(--ink);
+  font-family:var(--font-sans); font-size:16px; line-height:1.6;
+  -webkit-tap-highlight-color:transparent;
+}
+h1,h2,h3,p,ul,dl,dd,figure{ margin:0; }
+ul{ padding:0; list-style:none; }
+h1,h2,h3{ font-family:var(--font-serif); font-weight:500; }
+h1{ font-size:clamp(1.75rem, 1.2rem + 2.4vw, 2.5rem); line-height:1.12; letter-spacing:-0.02em; }
+h2{ font-size:1.25rem; line-height:1.25; letter-spacing:-0.01em; }
+a{ color:var(--ink); text-underline-offset:3px; text-decoration-thickness:1px; }
+:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; border-radius:1px; }
+[tabindex="-1"]:focus{ outline:none; }
+.mono{ font-family:var(--font-mono); }
+.dim{ color:var(--graphite); }
+.small{ font-size:0.875rem; line-height:1.5; }
+.sr-only{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0;
+}
+[hidden]{ display:none !important; }
+.symbols{ position:absolute; width:0; height:0; overflow:hidden; }
+
+.icon{
+  width:18px; height:18px; flex:none; fill:none; stroke:currentColor;
+  stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round;
+}
+
+/* ---- header: never scrolls ---------------------------------------------- */
+.bar{
+  position:sticky; top:0; z-index:20; background:var(--paper);
+  border-bottom:1px solid var(--rule); padding-top:env(safe-area-inset-top);
+}
+.bar-in{
+  height:var(--bar-h); max-width:calc(var(--col) + 2 * var(--gutter)); margin:0 auto;
+  padding:0 max(var(--gutter), env(safe-area-inset-left));
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+}
+.brand{
+  display:flex; align-items:center; gap:10px; text-decoration:none; white-space:nowrap;
+  font-family:var(--font-serif); font-weight:600; font-size:1.0625rem; letter-spacing:0.01em;
+}
+.brand .mark{ width:24px; height:24px; flex:none; shape-rendering:crispEdges; }
+.bar-link{ display:inline-flex; align-items:center; gap:5px; font-size:0.9375rem; color:var(--graphite); text-decoration:none; padding:8px 0; }
+/* The external-link icon: links to other sites open in a new tab. */
+.icon.ext{ width:13px; height:13px; stroke-width:2; }
+.foot a .ext{ margin-left:4px; vertical-align:-1px; }
+.bar-link:hover{ color:var(--ink); }
+.bar-end{ display:flex; align-items:center; gap:16px; }
+/* The language menu: a <details> element whose summary is set like a small outlined
+   button and whose list opens below it. It is disabled (class "off") while work is in progress. */
+.lang{ position:relative; }
+.lang > summary{
+  display:inline-flex; align-items:center; gap:5px; min-height:36px; padding:0 10px;
+  list-style:none; cursor:pointer; border:1px solid var(--ink); border-radius:var(--radius-sm); color:var(--ink);
+  font-family:var(--font-mono); font-size:0.8125rem; font-weight:500;
+  transition:background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+}
+.lang > summary::-webkit-details-marker{ display:none; }
+.lang[open] > summary{ background:var(--ink); color:var(--paper); }
+.lang .icon{ width:16px; height:16px; }
+.lang .chev{ width:14px; height:14px; transition:transform var(--dur-fast) var(--ease); }
+.lang[open] .chev{ transform:rotate(180deg); }
+.lang.off > summary{ opacity:0.4; cursor:default; }
+.lang-list{
+  position:absolute; right:0; top:calc(100% + 8px); z-index:30; min-width:190px; padding:6px;
+  background:var(--paper); border:1px solid var(--rule); border-radius:var(--radius-md);
+  box-shadow:0 12px 32px rgba(16,20,24,0.10);
+}
+.lang-list button{
+  display:block; width:100%; padding:10px 12px; border:0; border-radius:var(--radius-sm);
+  background:transparent; color:var(--ink); text-align:left; cursor:pointer;
+  font:inherit; font-size:0.9375rem;
+}
+.lang-list button[aria-current]{ font-weight:500; }
+/* Below 400 pixels the header holds the name and the language menu only; the footer links to dkds.org. */
+@media (max-width:399px){ .bar-link{ display:none; } }
+
+main{
+  flex:1; width:100%; max-width:calc(var(--col) + 2 * var(--gutter)); margin:0 auto;
+  padding:28px max(var(--gutter), env(safe-area-inset-right)) calc(40px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left));
+}
+
+/* ---- buttons: set in mono, two kinds ------------------------------------ */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:10px;
+  min-height:48px; padding:0 20px; border-radius:var(--radius-sm);
+  font-family:var(--font-mono); font-weight:500; font-size:0.9375rem; line-height:1.2;
+  background:var(--accent); color:var(--accent-ink); border:1px solid var(--accent);
+  text-decoration:none; cursor:pointer; text-align:center;
+  transition:background var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  touch-action:manipulation;
+}
+.btn-line{ background:transparent; color:var(--ink); border-color:var(--ink); }
+.btn-sm{ min-height:40px; padding:0 14px; font-size:0.8125rem; }
+.back{
+  display:inline-flex; align-items:center; gap:6px; margin:-8px 0 16px -6px; padding:8px 6px;
+  background:none; border:0; color:var(--graphite); font:inherit; font-size:0.9375rem; cursor:pointer;
+}
+.back:hover{ color:var(--ink); }
+.actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:24px; }
+
+/* ---- home ---------------------------------------------------------------- */
+.home .lede{ margin-top:14px; font-size:1.0625rem; max-width:62ch; }
+.inputs{ display:grid; gap:10px; margin-top:28px; }
+.inputs-big .btn{ min-height:60px; font-size:1rem; justify-content:flex-start; padding:0 20px; }
+.inputs-big .btn .icon{ width:22px; height:22px; }
+@media (min-width:600px){
+  .inputs{ grid-template-columns:repeat(3, 1fr); }
+  .inputs-big .btn{ flex-direction:column; justify-content:center; gap:8px; min-height:96px; }
+}
+.inputs-note{ margin-top:8px; }
+.inputs-big{ align-items:start; }
+.inputs-big .input-file .btn{ width:100%; }
+.inputs-small{ display:flex; flex-wrap:wrap; gap:8px; }
+.inputs-small .btn{ min-height:40px; padding:0 14px; font-size:0.8125rem; }
+
+.privacy{ margin-top:48px; padding-top:24px; border-top:1px solid var(--rule); }
+.privacy p{ margin-top:10px; max-width:66ch; font-size:0.9375rem; }
+.privacy .btn{ margin-top:14px; }
+
+.foot{ margin-top:40px; padding-top:20px; border-top:1px solid var(--rule); font-size:0.875rem; color:var(--graphite); }
+.foot nav{ display:flex; flex-wrap:wrap; gap:4px 20px; }
+.foot a{ display:inline-block; padding:6px 0; color:var(--ink); text-decoration:none; }
+.foot a:hover{ text-decoration:underline; }
+.foot p{ margin-top:6px; }
+.foot .btn{ margin-top:16px; }
+.foot .made{ margin-top:16px; }
+
+/* ---- camera --------------------------------------------------------------
+   The camera takes the whole screen, without the header. The controls form
+   one row of equal columns at the bottom, each with its icon above its label;
+   the frame is centred in the space above them. */
+body[data-screen="camera"]{ background:#000; }
+body[data-screen="camera"] .bar{ display:none; }
+body[data-screen="camera"] main{ max-width:none; padding:0; }
+.cam{
+  display:flex; flex-direction:column; max-width:960px; margin:0 auto;
+  height:100vh; height:100dvh; min-height:360px;
+}
+.cam-view{ position:relative; flex:1; min-height:0; overflow:hidden; background:#000; }
+.cam-view video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.cam-frame{
+  position:absolute; left:50%; top:calc(50% + env(safe-area-inset-top) / 2); transform:translate(-50%, -50%);
+  width:min(72vw, 52vh, 340px); aspect-ratio:1; border-radius:14px;
+  border:2px solid rgba(255,255,255,0.9); box-shadow:0 0 0 100vmax rgba(0,0,0,0.38);
+  pointer-events:none;
+}
+.cam-status{
+  position:absolute; left:50%; bottom:16px; transform:translateX(-50%);
+  width:max-content; max-width:calc(100% - 32px); padding:8px 14px; border-radius:var(--radius-md);
+  background:rgba(16,20,24,0.78); color:#fff; font-size:0.9375rem; line-height:1.4; text-align:center;
+}
+.cam-controls{
+  display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0, 200px); justify-content:center; gap:8px;
+  padding:10px max(var(--gutter), env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(var(--gutter), env(safe-area-inset-left));
+  background:var(--ink);
+}
+.cam-controls .btn{
+  flex-direction:column; gap:4px; min-height:64px; padding:8px 6px;
+  font-size:0.75rem; line-height:1.25; text-wrap:balance;
+}
+.cam-controls .btn-line{ color:#fff; border-color:rgba(255,255,255,0.7); }
+/* A white focus ring on the black camera screen. */
+.cam-controls :focus-visible{ outline-color:#fff; }
+@media (min-width:600px){
+  .cam-controls .btn{ flex-direction:row; gap:10px; min-height:52px; font-size:0.875rem; }
+}
+
+/* ---- text input ---------------------------------------------------------- */
+.paste .dim{ margin-top:12px; }
+.form{ margin-top:24px; }
+.form label{ display:block; font-weight:500; font-size:0.9375rem; margin-bottom:6px; }
+.form textarea, .form input{
+  display:block; width:100%; padding:12px; border:1px solid var(--graphite); border-radius:var(--radius-sm);
+  background:var(--sheet); color:var(--ink); font-family:var(--font-mono); font-size:16px; line-height:1.5;
+}
+.form textarea{ min-height:168px; resize:vertical; word-break:break-all; }
+.error{ margin-top:8px; color:var(--warn); font-size:0.9375rem; }
+
+/* ---- progress ------------------------------------------------------------ */
+.progress{ padding-top:12vh; text-align:center; display:flex; flex-direction:column; align-items:center; }
+.progress h1{ font-size:1.375rem; overflow-wrap:anywhere; }
+.progress-line{ margin-top:8px; min-height:1.6em; color:var(--graphite); }
+.progress .btn{ margin-top:24px; }
+.spinner{
+  width:36px; height:36px; margin-bottom:24px; border-radius:50%;
+  border:3px solid var(--rule); border-top-color:var(--ink); animation:spin 0.9s linear infinite;
+}
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+/* ---- problems ------------------------------------------------------------ */
+.problem p{ margin-top:12px; max-width:62ch; }
+.problem h1{ overflow-wrap:anywhere; }
+.problem-mark{
+  display:flex; align-items:center; justify-content:center; width:48px; height:48px; margin-bottom:16px;
+  border-radius:50%; background:var(--paper-sunk); color:var(--ink);
+}
+.problem-mark .icon{ width:24px; height:24px; }
+
+/* ---- results ------------------------------------------------------------- */
+.note{ margin-top:12px; padding:10px 14px; border-left:2px solid var(--ink); background:var(--paper-sunk); font-size:0.9375rem; }
+.cards{ display:grid; gap:20px; margin-top:24px; }
+.card{ border:1px solid var(--rule); border-radius:var(--radius-md); background:var(--sheet); overflow:hidden; }
+.own{ padding:18px 18px 20px; }
+@media (min-width:600px){ .own{ padding:22px 24px 24px; } }
+.status-row{ display:flex; align-items:center; justify-content:space-between; gap:8px 12px; flex-wrap:wrap; }
+.status{
+  display:inline-flex; align-items:center; gap:8px; min-height:30px; padding:3px 10px 3px 8px;
+  border-radius:var(--radius-sm); font-family:var(--font-mono); font-size:0.875rem; font-weight:500; letter-spacing:0;
+}
+.status .icon{ width:16px; height:16px; stroke-width:2.2; }
+.status.ok{ color:var(--ok); background:var(--ok-bg); }
+.status.bad{ color:var(--warn); background:var(--warn-bg); }
+.status.idle{ color:var(--graphite); background:var(--idle-bg); }
+/* The tag naming where the stamp was read: the camera, the text, or the file and its pages. */
+.source{
+  display:inline-flex; align-items:center; gap:6px; min-width:0; max-width:100%; padding:3px 8px;
+  border:1px solid var(--rule); border-radius:var(--radius-sm);
+  font-size:0.8125rem; line-height:1.4; color:var(--graphite);
+}
+.source .icon{ width:14px; height:14px; }
+.source-name{ min-width:0; overflow-wrap:anywhere; }
+.pages{ white-space:nowrap; }
+.pages::before{ content:"·"; margin-right:6px; }
+
+.domain{
+  margin-top:14px; font-family:var(--font-mono); font-weight:500; line-height:1.2;
+  font-size:clamp(1.375rem, 1rem + 2.2vw, 1.875rem); overflow-wrap:anywhere;
+}
+.facts{ display:grid; grid-template-columns:auto 1fr; gap:6px 16px; margin-top:16px; font-size:0.9375rem; }
+.facts dt{ color:var(--graphite); }
+.warnings{ margin-top:16px; display:grid; gap:8px; }
+.warnings li{
+  display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:var(--radius-sm);
+  background:var(--warn-bg); color:var(--ink); font-size:0.9375rem; line-height:1.5;
+}
+.warnings .icon{ color:var(--warn); margin-top:2px; }
+.warnings span{ overflow-wrap:anywhere; min-width:0; }
+/* A domain in a sentence is kept on one line, so that it is never divided at a hyphen; a domain too
+   long for a narrow screen is divided between any two characters. */
+.dom-inline{ font-family:var(--font-mono); font-size:0.9em; white-space:nowrap; }
+.dom-inline.long{ white-space:normal; word-break:break-all; }
+
+/* The contents of the stamp: the issuer's fields in a ruled table of names and values, set apart
+   from the verifier's statements by a rule, a background and a heading that names the domain. The
+   columns are fixed, so that a long value wraps instead of widening the table. */
+.contents{ padding:18px 18px 20px; border-top:1px solid var(--rule); background:var(--paper); }
+@media (min-width:600px){ .contents{ padding:20px 24px 24px; } }
+.contents-h{ font-family:var(--font-sans); font-size:0.9375rem; font-weight:500; overflow-wrap:anywhere; }
+.contents-h bdi{ font-size:1em; }
+.fields{ margin-top:12px; border:1px solid var(--rule); border-radius:var(--radius-sm); background:var(--sheet); overflow:hidden; }
+.fields table{ width:100%; table-layout:fixed; border-collapse:collapse; }
+.fields th, .fields td{ padding:9px 12px; text-align:left; vertical-align:baseline; overflow-wrap:anywhere; }
+.fields thead th{
+  width:36%; padding-block:6px; background:var(--paper-sunk);
+  font-size:0.75rem; font-weight:500; color:var(--graphite);
+}
+.fields thead th + th{ width:auto; }
+.fields tbody tr{ border-top:1px solid var(--rule); }
+.field th{ font-size:0.875rem; font-weight:400; color:var(--graphite); }
+.field td{ white-space:pre-wrap; }
+.empty{ font-size:0.8125rem; font-style:italic; color:var(--graphite); }
+.raw{ margin-top:14px; font-size:0.875rem; }
+.raw summary{ cursor:pointer; padding:4px 0; width:max-content; max-width:100%; color:var(--graphite); }
+.raw-text{
+  margin:8px 0 0; padding:10px 12px; max-height:200px; overflow:auto;
+  border:1px solid var(--rule); border-radius:var(--radius-sm); background:var(--sheet);
+  font-family:var(--font-mono); font-size:0.8125rem; line-height:1.5; white-space:pre-wrap; word-break:break-all;
+}
+.raw .btn{ margin-top:10px; }
+
+.explain{ margin-top:14px; font-size:1.0625rem; }
+.hint{ margin-top:10px; font-size:0.9375rem; color:var(--graphite); }
+.card-actions{ margin-top:16px; }
+.details{ margin-top:16px; font-size:0.875rem; color:var(--graphite); }
+.details summary{ cursor:pointer; padding:4px 0; width:max-content; max-width:100%; }
+.details p{ margin-top:6px; }
+.reason{ overflow-wrap:anywhere; font-size:0.8125rem; }
+
+.next{ margin-top:36px; padding-top:20px; border-top:1px solid var(--rule); }
+.next .inputs{ margin-top:14px; }
+
+/* ---- dropping a file ------------------------------------------------------ */
+body.dropping::after{
+  content:attr(data-drop); position:fixed; inset:12px; z-index:50;
+  display:flex; align-items:center; justify-content:center; text-align:center; padding:24px;
+  border:2px dashed var(--ink); border-radius:var(--radius-md); background:rgba(245,246,244,0.94);
+  font-family:var(--font-mono); font-size:1.0625rem; pointer-events:none;
+}
+
+/* ---- start and failure to start --------------------------------------------- */
+.boot{ padding-top:12vh; text-align:center; color:var(--graphite); }
+.boot-late{ margin-top:16px; opacity:0; animation:appear 0s 6s forwards; }
+@keyframes appear{ to{ opacity:1; } }
+
+/* Hover styles, for devices with a pointer that hovers. */
+@media (hover:hover){
+  .btn:hover{ background:var(--accent-hover); border-color:var(--accent-hover); }
+  .btn-line:hover{ background:var(--ink); border-color:var(--ink); color:var(--paper); }
+  .cam-controls .btn-line:hover{ background:#fff; color:var(--ink); }
+  .lang:not(.off) > summary:hover{ background:var(--ink); color:var(--paper); }
+  .lang-list button:hover{ background:var(--paper-sunk); }
+}
+@media (prefers-reduced-motion:reduce){
+  .spinner{ animation-duration:3s; }
+  .btn{ transition:none; }
+}

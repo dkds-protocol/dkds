@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="{{CSP}}">
+<meta name="referrer" content="no-referrer">
+<title>DKDS Verifier</title>
+<meta name="description" content="{{DESCRIPTION}}">
+<meta name="theme-color" content="#F5F6F4">
+<meta name="color-scheme" content="light">
+<link rel="manifest" href="manifest.webmanifest">
+{{ICONS}}
+<link rel="preload" href="fonts/roboto-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/roboto-mono-latin-500-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="app.css">
+<script type="module" src="app.js"></script>
+</head>
+<body data-screen="start" data-drop="{{DROP}}">
+<svg class="symbols" aria-hidden="true">
+{{SYMBOLS}}
+</svg>
+
+<header class="bar">
+  <div class="bar-in">
+    <a class="brand" href="./"><svg class="mark" aria-hidden="true"><use href="#i-mark"/></svg>DKDS</a>
+    <div class="bar-end">
+      <a class="bar-link" href="https://dkds.org" target="_blank" rel="noopener" translate="no">dkds.org<svg class="icon ext" aria-hidden="true"><use href="#i-ext"/></svg></a>
+      <details class="lang" id="lang-menu" hidden>
+        <summary><svg class="icon" aria-hidden="true"><use href="#i-globe"/></svg><span class="sr-only" id="lang-label">{{LANGUAGE}}</span><span id="lang-code" translate="no">EN</span><svg class="icon chev" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+        <div class="lang-list" id="lang-list" translate="no"></div>
+      </details>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="boot">
+    <p>Loading the verifier.</p>
+    <p class="boot-late">If this message remains, the browser could not start the verifier. It requires JavaScript and a current version of Safari, Chrome, Edge or Firefox.</p>
+  </div>
+</main>
+
+<input type="file" id="file" accept="image/*,application/pdf,.pdf,.heic,.heif" hidden>
+</body>
+</html>

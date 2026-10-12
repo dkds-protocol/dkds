@@ -1,0 +1,21 @@
+{
+  "name": "dkds-spec-tools",
+  "private": true,
+  "type": "module",
+  "description": "Reference tooling for the DKDS specification: example, test vector generator, reference verifier.",
+  "author": "Vince Lubbers",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@noble/curves": "2.0.1",
+    "@noble/hashes": "2.0.1"
+  },
+  "devDependencies": {
+    "ajv": "8.18.0"
+  },
+  "scripts": {
+    "vectors": "node vectors.mjs",
+    "schema": "node check-schema.mjs",
+    "test": "node vectors.mjs && node check-frozen.mjs && node check-schema.mjs && node run.mjs",
+    "example": "node example.mjs"
+  }
+}

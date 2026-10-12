@@ -1,0 +1,6 @@
+# Keep LF everywhere: spec examples and test vectors must be byte-identical on every platform.
+* text=auto eol=lf
+
+# Binary test data is never touched.
+*.bin binary
+*.png binary

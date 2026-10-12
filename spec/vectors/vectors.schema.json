@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://dkds.org/spec/v1/vectors.schema.json",
+  "title": "DKDS version 1 test vectors",
+  "type": "object",
+  "required": ["specification", "keys", "vectors"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "specification": { "const": "DKDS version 1" },
+    "generator": { "type": "string" },
+    "keys": {
+      "description": "The test keys used to build the vectors. The seeds are published: these keys must never be used for anything else.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["seed", "public"],
+        "additionalProperties": false,
+        "properties": {
+          "seed": { "type": "string", "pattern": "^[0-9a-f]{64}$", "description": "The 32-byte Ed25519 seed (RFC 8032 private key), in hexadecimal." },
+          "public": { "type": "string", "description": "The public key, in padded Base64." },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "vectors": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/vector" }
+    }
+  },
+  "$defs": {
+    "vector": {
+      "type": "object",
+      "required": ["id", "section", "description", "text", "now", "dns", "expected"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "description": "Unique, stable identifier." },
+        "section": { "type": "string", "description": "The part of the specification the vector tests." },
+        "description": { "type": "string" },
+        "text": { "type": "string", "description": "The text form exactly as a QR scanner would deliver it. It may be deliberately invalid." },
+        "now": { "type": "integer", "minimum": 0, "description": "The verifier's clock, in Unix seconds." },
+        "dns": {
+          "description": "The simulated DNS. A name that is not listed does not exist (NXDOMAIN).",
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/dnsEntry" }
+        },
+        "expected": { "$ref": "#/$defs/expected" },
+        "intermediate": {
+          "description": "Intermediate values of a valid vector, in hexadecimal, for debugging an implementation.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "envelope": { "type": "string", "pattern": "^([0-9a-f]{2})*$" },
+            "message": { "type": "string", "pattern": "^([0-9a-f]{2})*$", "description": "The signed message: \"DKDS\" followed by the signed part." },
+            "field_list": { "type": "string", "pattern": "^([0-9a-f]{2})*$", "description": "The field list before compression." }
+          }
+        }
+      },
+      "if": { "properties": { "expected": { "type": "object", "properties": { "outcome": { "const": "valid" } } } } },
+      "then": { "required": ["intermediate"] },
+      "else": { "not": { "required": ["intermediate"] } }
+    },
+    "dnsEntry": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["result", "txt", "dnssec"],
+          "additionalProperties": false,
+          "properties": {
+            "result": { "const": "answer" },
+            "txt": {
+              "description": "The TXT records at the name. Each record is a list of character strings, to be joined without separators.",
+              "type": "array",
+              "items": { "type": "array", "items": { "type": "string" } }
+            },
+            "dnssec": { "type": "boolean", "description": "Whether the answer was validated with DNSSEC." }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["result", "target"],
+          "additionalProperties": false,
+          "properties": {
+            "result": { "const": "cname" },
+            "target": { "type": "string", "description": "The name the resolver follows. The DNSSEC status of the answer is that of the entry at the end of the chain." }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["result"],
+          "additionalProperties": false,
+          "properties": {
+            "result": { "enum": ["nxdomain", "failure"], "description": "failure stands for any lookup that produced no answer: timeout, server failure, DNSSEC validation failure, or disagreeing resolvers." }
+          }
+        }
+      ]
+    },
+    "expected": {
+      "type": "object",
+      "required": ["outcome", "queries"],
+      "additionalProperties": false,
+      "properties": {
+        "outcome": { "enum": ["valid", "malformed", "unsupported", "key-not-found", "key-revoked", "invalid-signature", "unavailable"] },
+        "queries": {
+          "description": "The DNS names the verifier queries, in order. Empty when the stamp must be rejected before any DNS query (specification 8.2). The targets of CNAME records are followed by the resolver and are not listed.",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "domain": { "type": "string" },
+        "domain_unicode": { "type": "string" },
+        "key_id": { "type": "string" },
+        "issued_at": { "type": "integer", "minimum": 0 },
+        "dnssec": { "type": "boolean" },
+        "fields": {
+          "type": "array",
+          "items": { "type": "array", "prefixItems": [{ "type": "string" }, { "type": "string" }], "minItems": 2, "maxItems": 2 }
+        }
+      },
+      "if": { "properties": { "outcome": { "const": "valid" } } },
+      "then": { "required": ["domain", "domain_unicode", "key_id", "issued_at", "dnssec", "fields"] },
+      "else": { "not": { "anyOf": [{ "required": ["domain"] }, { "required": ["domain_unicode"] }, { "required": ["key_id"] }, { "required": ["issued_at"] }, { "required": ["dnssec"] }, { "required": ["fields"] }] } }
+    }
+  }
+}

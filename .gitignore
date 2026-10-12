@@ -1,0 +1,7 @@
+# dependencies
+node_modules/
+
+# build output
+dkds.js/dist/
+scan/out/
+scan/test/out/

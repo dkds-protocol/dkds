@@ -1,0 +1,33 @@
+/* ===========================================================================
+   DKDS brand tokens: the colours, type and motion shared by dkds.org and
+   scan.dkds.org.
+   =========================================================================== */
+
+:root{
+  --paper:        #F5F6F4;
+  --paper-sunk:   #ECEEEA;
+  --sheet:        #FCFCFB;
+  --rule:         #D8DBD6;
+  --graphite:     #5C6169;
+  --ink:          #101418;
+  --accent:       #2563EB;
+  --accent-hover: #1D4FD0;
+  --accent-ink:   #FFFFFF;
+
+  --ok:       #1F7A4D;
+  --ok-bg:    rgba(31,122,77,0.10);
+  --warn:     #A23B12;
+  --warn-bg:  rgba(162,59,18,0.10);
+  --idle-bg:  rgba(16,20,24,0.055);
+
+  --font-sans:  "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Roboto Slab", Georgia, serif;
+  --font-mono:  "Roboto Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+}

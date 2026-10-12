@@ -1,0 +1,17 @@
+scan.dkds.org
+Copyright 2026 Vince Lubbers
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+The built application contains the following works of others. The build collects their licences in
+out/licences.txt, which the application links from its footer.
+
+- zxing-wasm 3.1.4, Copyright (c) 2023 Ze-Zheng Wu, MIT License. It contains ZXing-C++, Apache
+  License 2.0.
+- pdf.js 6.3.289 (pdfjs-dist), Mozilla Foundation, Apache License 2.0, with its WebAssembly modules
+  for JBIG2, JPEG 2000 (OpenJPEG) and colour management (qcms), each under the licence included with
+  it.
+- @noble/curves and @noble/hashes, Copyright (c) Paul Miller, MIT License, through dkds.js.
+- The typefaces Roboto and Roboto Mono (SIL Open Font License 1.1) and Roboto Slab (Apache License
+  2.0), from brand/fonts.
+- Icons from Lucide, ISC License (brand/LICENSE-Lucide.txt).

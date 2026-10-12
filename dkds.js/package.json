@@ -1,0 +1,74 @@
+{
+  "name": "dkds.js",
+  "version": "1.0.0",
+  "description": "Reference implementation of the Domain-Keyed Document Stamp (DKDS) protocol: library, command-line tool and local HTTP API.",
+  "keywords": [
+    "dkds",
+    "document",
+    "stamp",
+    "signature",
+    "ed25519",
+    "qr",
+    "dns",
+    "verification"
+  ],
+  "homepage": "https://dkds.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dkds-protocol/dkds.git",
+    "directory": "dkds.js"
+  },
+  "bugs": {
+    "url": "https://github.com/dkds-protocol/dkds/issues"
+  },
+  "author": "Vince Lubbers",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node/index.d.ts",
+      "default": "./dist/node/index.js"
+    }
+  },
+  "bin": {
+    "dkds": "dist/node/bin.js"
+  },
+  "files": [
+    "dist",
+    "NOTICE",
+    "CHANGELOG.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test \"test/**/*.test.ts\"",
+    "test:runtimes": "node test/runtimes/run.ts",
+    "prepublishOnly": "npm run build && npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "@types/qrcode": "1.5.6",
+    "@zxing/library": "0.21.3",
+    "deno": "2.9.6",
+    "esbuild": "0.25.10",
+    "jsqr": "1.4.0",
+    "puppeteer-core": "25.12.0",
+    "qrcode": "1.5.4",
+    "typescript": "7.0.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

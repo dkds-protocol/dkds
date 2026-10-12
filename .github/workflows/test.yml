@@ -1,0 +1,82 @@
+# The tests of the repository: one job per project. The actions are pinned to the commit of the
+# release named in the comment.
+
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  spec:
+    name: Specification tools and test vectors
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: spec/tools/package-lock.json
+      - run: npm ci
+        working-directory: spec/tools
+      - name: Generate the vectors and check them against the reference verifier
+        run: npm test
+        working-directory: spec/tools
+      - name: Committed vectors are those the generator produces
+        run: git diff --exit-code -- spec/vectors
+
+  dkds-js:
+    name: dkds.js
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            dkds.js/package-lock.json
+            spec/tools/package-lock.json
+      - name: Install the reference verifier, which the differential tests compare against
+        run: npm ci
+        working-directory: spec/tools
+      - run: npm ci
+        working-directory: dkds.js
+      # The runtime tests import the built package, so the build comes before the type check.
+      - run: npm run build
+        working-directory: dkds.js
+      - run: npm run typecheck
+        working-directory: dkds.js
+      - run: npm test
+        working-directory: dkds.js
+      - name: Test vectors in Node.js, Deno and Chrome
+        run: npm run test:runtimes
+        working-directory: dkds.js
+
+  scan:
+    name: scan.dkds.org
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            dkds.js/package-lock.json
+            scan/package-lock.json
+      - name: Install dkds.js, which the verifier uses from its sources
+        run: npm ci
+        working-directory: dkds.js
+      - run: npm ci
+        working-directory: scan
+      - run: npm run typecheck
+        working-directory: scan
+      - name: Build, then test in Chrome
+        run: npm test
+        working-directory: scan

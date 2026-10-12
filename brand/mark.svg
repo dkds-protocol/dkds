@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="currentColor">
+  <!-- The DKDS mark: a shield on a grid of 16 by 16 cells of 4 units. Drawn by Vince Lubbers. -->
+  <path d="M0 0H4V44H0V0Z"/>
+  <path d="M20 12V40H24V44H28V12H20Z"/>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M8 0H64V44H60V48H56V52H52V56H48V60H44V64H28V60H24V56H20V52H16V48H12V44H8V0ZM16 40V8H56V40H52V44H48V48H44V52H40V56H32V52H28V48H24V44H20V40H16Z"/>
+  <path d="M44 44H48V40H52V12H44V44Z"/>
+  <path d="M32 12H40V52H32V12Z"/>
+  <path d="M4 44H8V48H4V44Z"/>
+  <path d="M8 48H12V52H8V48Z"/>
+  <path d="M12 52H16V56H12V52Z"/>
+  <path d="M16 56H20V60H16V56Z"/>
+  <path d="M20 60H24L24 64H20V60Z"/>
+</svg>
