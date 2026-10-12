@@ -550,11 +550,28 @@ function pasteScreen(initial = ""): void {
   showPaste(initial);
 }
 
+/**
+ * Returns the plain-text form of the clipboard content of a paste event, or "" if it holds none.
+ * Safari on iOS and iPadOS treats text of the form "word:rest" as a link and, by default, pastes
+ * that form instead: the text before the colon in lowercase, spaces as "%20" and a "%" without two
+ * hexadecimal digits as "%25". The text field and the page therefore insert the plain-text form
+ * themselves.
+ */
+function plainText(event: ClipboardEvent): string {
+  return event.clipboardData?.getData("text/plain") ?? "";
+}
+
 /** Draws the text screen with `value` in its text field. */
 function showPaste(value: string): void {
   const P = T.paste;
   const area = h("textarea", { id: "stamp-text", rows: 6, spellcheck: "false", autocapitalize: "off", autocomplete: "off", autocorrect: "off" });
   area.value = value;
+  area.addEventListener("paste", (event) => {
+    const text = plainText(event);
+    if (text === "") return;
+    event.preventDefault();
+    if (!document.execCommand("insertText", false, text)) area.setRangeText(text, area.selectionStart, area.selectionEnd, "end");
+  });
   const error = h("p", { class: "error", role: "alert", hidden: true }, P.empty);
   const submit = (event: Event) => {
     event.preventDefault();
@@ -678,7 +695,7 @@ document.addEventListener("paste", (event) => {
     void readFiles(files);
     return;
   }
-  const text = event.clipboardData?.getData("text") ?? "";
+  const text = plainText(event);
   if (text !== "") {
     event.preventDefault();
     pasteScreen(text);

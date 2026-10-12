@@ -416,6 +416,39 @@ await group("verify again after an unavailable key", async () => {
   return `${v.id} answered on the second attempt`;
 });
 
+await group("pasting the plain-text form of the clipboard", async () => {
+  const v = vector("valid-appendix-c");
+  // The link form that Safari on iOS pastes by default, beside the plain-text form.
+  const link = "dkds:" + v.text.slice(5).replace(/ /g, "%20").replace(/%(?![0-9A-F]{2})/g, "%25");
+  const paste = (selector) =>
+    page.evaluate((selector, plain, link) => {
+      const data = new DataTransfer();
+      data.setData("text/uri-list", link);
+      data.setData("text/plain", plain);
+      document.querySelector(selector).dispatchEvent(new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }));
+    }, selector, v.text, link);
+  const field = () => page.$eval("#stamp-text", (e) => e.value);
+  state.dns = v.dns;
+  // Into the text field.
+  await page.goto(url, { waitUntil: "networkidle0" });
+  await page.evaluate((t) => { localStorage.clear(); globalThis.__now = t; }, v.now);
+  await press(page, "Paste text");
+  await screen(page, ["text"]);
+  await page.focus("#stamp-text");
+  await paste("#stamp-text");
+  assert.equal(await field(), v.text, "text field");
+  await press(page, "Verify text");
+  await screen(page, ["results"]);
+  assert.equal((await cards(page))[0].outcome, "valid");
+  // Onto the page outside a text field.
+  await page.goto(url, { waitUntil: "networkidle0" });
+  await page.evaluate((t) => { globalThis.__now = t; }, v.now);
+  await paste("body");
+  await screen(page, ["text"]);
+  assert.equal(await field(), v.text, "page");
+  return "the plain-text form is inserted, not the link form, in the text field and from the page";
+});
+
 await group("warnings from the key store", async () => {
   await page.evaluate(() => localStorage.clear());
   const a = await F.stamp({ fields: [["Invoice", "1"]] });

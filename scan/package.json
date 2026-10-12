@@ -1,6 +1,6 @@
 {
   "name": "dkds-scan",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "scan.dkds.org: a verifier of DKDS stamps that runs in the web browser",
   "author": "Vince Lubbers",

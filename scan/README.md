@@ -12,7 +12,7 @@ only network requests after loading are the DNS queries for the issuer's key.
 | Camera | "Open camera" | The rear camera is read continuously until a stamp is found; the torch where the device has one, and a change between the rear and the front camera |
 | Image | "Open file", or dropped or pasted onto the page | PNG, JPEG, WebP, GIF and BMP; HEIC and AVIF where the browser decodes them |
 | PDF file | "Open file" | Up to 50 pages are rendered at 300 dots per inch and read; password-protected files are opened with the reader's password |
-| Text | "Paste text" | The text form `DKDS:…` is verified exactly as entered |
+| Text | "Paste text", or pasted onto the page | The text form `DKDS:…` is verified exactly as entered; pasted text is taken from the plain-text form of the clipboard |
 
 Every stamp found is verified independently; a stamp that appears on several pages is shown once,
 with its pages. A QR code that is not a stamp is reported as such, and its content is not shown. Its
@@ -126,7 +126,7 @@ made by hand.
 
 | Part | Size (gzip) | Loaded |
 |---|---|---|
-| Application, dkds.js and English included | 41 KB | at start |
+| Application, dkds.js and English included | 42 KB | at start |
 | Each other language | 4 KB | when it is chosen |
 | QR decoder (zxing-wasm) | 416 KB | at start, in a worker |
 | pdf.js, legacy build | 530 KB | when the first PDF file is opened |

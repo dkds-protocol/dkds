@@ -3,6 +3,14 @@
 Changes to scan.dkds.org by version. The version and the build identifier of the deployed verifier
 are shown in its footer.
 
+## 1.0.1
+
+- Pasted text is taken from the plain-text form of the clipboard. Safari on iOS and iPadOS pasted
+  the text of a stamp in the form of a link, with the prefix in lowercase and some characters
+  percent-encoded, so that a stamp copied and pasted on an iPhone or iPad was reported as malformed.
+  See [Text from other sources](https://dkds.org/docs/verifying#text-from-other-sources) in the guide
+  to building a verifier.
+
 ## 1.0.0
 
 - Inputs: the camera, with a torch and switching between the rear and the front camera; image files;
