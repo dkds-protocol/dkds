@@ -4,7 +4,7 @@
 
 import assert from "node:assert/strict";
 import { generateKeyPairSync, sign as nodeSign } from "node:crypto";
-import { test } from "node:test";
+import { mock, test } from "node:test";
 import { base64DecodeCanonical, base64Encode } from "../src/bytes.ts";
 import { punycodeDecode, punycodeEncode } from "../src/punycode.ts";
 import {
@@ -83,13 +83,20 @@ test("createStamp checks every input rule", async () => {
     [{ issuedAt: -1 }, "envelope-invalid"],
     [{ issuedAt: 2 ** 32 }, "envelope-invalid"],
     [{ issuedAt: 1.5 }, "envelope-invalid"],
-    [{ issuedAt: Math.floor(Date.now() / 1000) + 601 }, "envelope-invalid"],
     [{ privateKey: new Uint8Array(31) }, "key-invalid"],
     [{ privateKey: "not a key" }, "key-invalid"],
   ];
   for (const [change, code] of cases) {
     await assert.rejects(createStamp({ ...base, ...change }), rejectsWith(code), `${JSON.stringify(change).slice(0, 80)} -> ${code}`);
   }
+});
+
+test("createStamp refuses an issuedAt more than 600 seconds after the system clock", async (t) => {
+  // The clock is fixed, so that createStamp reads the same time as the test.
+  mock.timers.enable({ apis: ["Date"], now: NOW * 1000 });
+  t.after(() => mock.timers.reset());
+  await assert.rejects(createStamp({ ...base, issuedAt: NOW + LIMITS.clockToleranceSeconds + 1 }), rejectsWith("envelope-invalid"));
+  await createStamp({ ...base, issuedAt: NOW + LIMITS.clockToleranceSeconds });
 });
 
 test("createStamp requires exactly one of privateKey and signer", async () => {
