@@ -1,6 +1,6 @@
 {
   "name": "dkds.js",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Reference implementation of the Domain-Keyed Document Stamp (DKDS) protocol: library, command-line tool and local HTTP API.",
   "keywords": [
     "dkds",

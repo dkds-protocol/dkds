@@ -14,12 +14,16 @@ import { fileURLToPath } from "node:url";
 import { after, before, test } from "node:test";
 import { createStamp, keyRecord, publicKeyOf, verifyStamp, type Resolver } from "../src/index.ts";
 import { createApiServer } from "../src/node/index.ts";
+import { parseRecordFile, RecordFileError } from "../src/node/records.ts";
 
 const BIN = new URL("../src/node/bin.ts", import.meta.url);
 const seed = new Uint8Array(32).fill(0x07);
 const NOW = 1790758800;
 const RECORD = keyRecord(publicKeyOf(seed));
-const zone = new Map<string, string>([["k1._dkds.issuer.example", RECORD]]);
+const zone = new Map<string, string>([
+  ["k1._dkds.issuer.example", RECORD],
+  ["k3._dkds.issuer.example", keyRecord(null)],
+]);
 
 /** Encodes a DNS response with the TXT records of `zone` for the question in `query`. */
 function dnsResponse(query: Buffer): Buffer {
@@ -99,6 +103,75 @@ test("keygen, record, create, inspect and verify", async () => {
 
   const json = JSON.parse((await dkds(["verify", "-", "--json", "--resolver", dohUrl, "--now", String(NOW)], text)).stdout);
   assert.deepEqual(json.fields, [["Invoice no.", "2026-0917"], ["Amount", "4,812.50 EUR"]]);
+});
+
+test("keygen prints the record with its DNS name when given the domain and the key ID", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "dkds-"));
+  const keygen = await dkds(["keygen", "--out", join(dir, "k2.pem"), "--domain", "Issuer.Example", "--key-id", "k2"]);
+  assert.equal(keygen.status, 0, keygen.stderr);
+  assert.match(keygen.stdout, /^k2\._dkds\.issuer\.example\. TXT "v=DKDS1; k=ed25519; p=[A-Za-z0-9+/]{43}="\n$/);
+  assert.equal((await dkds(["keygen", "--out", join(dir, "k3.pem"), "--domain", "issuer.example"])).status, 64);
+  assert.equal((await dkds(["keygen", "--out", join(dir, "k4.pem"), "--domain", "issuer.example", "--key-id", "K4"])).status, 1);
+  assert.throws(() => statSync(join(dir, "k4.pem")), "no key is written for an invalid key ID");
+});
+
+test("check compares every record of a file with the published one", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "dkds-"));
+  const other = keyRecord(new Uint8Array(32).fill(1));
+  const file = join(dir, "records.txt");
+
+  writeFileSync(file, `; key records of issuer.example\nk1._dkds.issuer.example. TXT "${RECORD}"\n\nk3._dkds.issuer.example. 3600 IN TXT "v=DKDS1; k=ed25519; " "p="\n`);
+  const ok = await dkds(["check", file, "--resolver", dohUrl]);
+  assert.equal(ok.status, 0, ok.stderr);
+  assert.equal(ok.stdout, "matches     k1._dkds.issuer.example\nmatches     k3._dkds.issuer.example\n");
+
+  writeFileSync(file, `k1._dkds.issuer.example. TXT "${other}"\nk2._dkds.issuer.example. TXT "${RECORD}"\nk3._dkds.issuer.example TXT "${RECORD}"\n`);
+  const bad = await dkds(["check", file, "--resolver", dohUrl]);
+  assert.equal(bad.status, 1);
+  assert.equal(
+    bad.stdout,
+    `differs     k1._dkds.issuer.example: ${RECORD}\nmissing     k2._dkds.issuer.example\ndiffers     k3._dkds.issuer.example: ${keyRecord(null)}\n`,
+  );
+
+  writeFileSync(file, `k1._dkds.issuer.example. TXT "${RECORD}"\n`);
+  const down = await dkds(["check", file, "--resolver", "http://127.0.0.1:9/dns-query"]);
+  assert.equal(down.status, 2);
+  assert.equal(down.stdout, "unavailable k1._dkds.issuer.example\n");
+
+  writeFileSync(file, `k1._dkds.issuer.example. TXT ${RECORD}\n`);
+  const malformed = await dkds(["check", file]);
+  assert.equal(malformed.status, 64);
+  assert.match(malformed.stderr, /, line 1: the record is not written as quoted strings\./);
+  assert.equal((await dkds(["check"])).status, 64);
+});
+
+test("a file of key records is read in the forms of dkds record and of zone files", () => {
+  const records = parseRecordFile(
+    [
+      "# comment",
+      `K1._DKDS.Issuer.Example. 300 IN TXT "${RECORD.slice(0, 20)}" "${RECORD.slice(20)}" ; comment`,
+      `k2._dkds.issuer.example txt "v=DKDS1; k=ed25519; p=" `,
+      `k3._dkds.issuer.example. IN 60 TXT "v=DKDS1;\\032k=ed25519; p=\\"\\\\"`,
+    ].join("\r\n"),
+  );
+  assert.deepEqual(
+    records.map((r) => [r.line, r.name, r.record.text]),
+    [
+      [2, "k1._dkds.issuer.example", RECORD],
+      [3, "k2._dkds.issuer.example", "v=DKDS1; k=ed25519; p="],
+      [4, "k3._dkds.issuer.example", 'v=DKDS1; k=ed25519; p="\\'],
+    ],
+  );
+
+  const error = (text: string) => assert.throws(() => parseRecordFile(text), RecordFileError);
+  error("");
+  error(`www.issuer.example. TXT "${RECORD}"`);
+  error(`k1._dkds.issuer. TXT "${RECORD}"`);
+  error(`k1._dkds.issuer.example. TXT "v=spf1 -all"`);
+  error(`k1._dkds.issuer.example. TXT "${RECORD}`);
+  error(`k1._dkds.issuer.example. A 192.0.2.1`);
+  error(`k1._dkds.issuer.example. TXT "${RECORD}"\nk1._dkds.issuer.example. TXT "${RECORD}"`);
+  assert.throws(() => parseRecordFile(`\n\nk1._dkds.issuer.example. TXT ""`), (e: RecordFileError) => e.line === 3);
 });
 
 test("exit status: 1 for not valid, 2 for unavailable, 64 for incorrect usage", async () => {

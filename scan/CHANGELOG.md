@@ -3,6 +3,14 @@
 Changes to scan.dkds.org by version. The version and the build identifier of the deployed verifier
 are shown in its footer.
 
+## 1.0.2
+
+- The time of signing is marked "As stated by the issuer", following the correction of 19 October
+  2026 to sections 1 and 9.1 of the specification: the signer chooses the time of issue, so it is the
+  signer's statement, not the verifier's.
+- Below the fields, the result asks the reader to compare them with the document, the step that
+  the verifier does not perform.
+
 ## 1.0.1
 
 - Pasted text is taken from the plain-text form of the clipboard. Safari on iOS and iPadOS pasted

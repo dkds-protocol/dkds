@@ -155,9 +155,13 @@ export const en = {
         : `${n} other QR codes were found that are not DKDS stamps; their content is not shown.`,
     page: (pages: readonly number[]) => (pages.length === 1 ? `Page ${pages[0]}` : `Pages ${list(L, pages.map(String))}`),
     labels: { domain: "Domain", signed: "Signed", dns: "DNS", warnings: "Warnings" },
+    /** The note below the time of signing, which the signer chooses (specification 9.1). */
+    stated: "As stated by the issuer",
     dnssec: (validated: boolean): string => (validated ? "Answer validated with DNSSEC" : "Answer not validated with DNSSEC"),
     /** The heading of the fields, followed by the domain. */
     contentsBy: "Contents of the stamp, signed by",
+    /** The sentence below the fields: the comparison that the verifier does not make. */
+    compare: "Compare the fields with the document. A difference shows that one of them was altered.",
     /** The column headings of the fields, and the summary that shows the text form of the stamp. */
     fieldName: "Field",
     fieldValue: "Value",

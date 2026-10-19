@@ -1,7 +1,8 @@
 /**
  * The result card of one stamp (specification 9.1). For `valid`, the verifier's
- * statements come first, in the order of 9.1; the fields follow, set apart under a heading that names
- * the domain that signed them, with the text of the stamp below them. For any other outcome, the card
+ * statements come first, in the order of 9.1, with the time of signing marked as the signer's; the
+ * fields follow, set apart under a heading that names the domain that signed them, with the request to
+ * compare them with the document and the text of the stamp below them. For any other outcome, the card
  * shows the outcome and its explanation, and no fields. Each card is tagged with where the stamp was
  * read.
  */
@@ -106,7 +107,7 @@ function validCard(stamp: CheckedStamp, origin: Origin): HTMLElement {
         "dl",
         { class: "facts" },
         h("dt", {}, T.result.labels.signed),
-        h("dd", {}, formatTime(r.issuedAt ?? 0, T.locale)),
+        h("dd", {}, formatTime(r.issuedAt ?? 0, T.locale), h("span", { class: "stated" }, T.result.stated)),
         h("dt", {}, T.result.labels.dns),
         h("dd", {}, T.result.dnssec(r.dnssec === true)),
       ),
@@ -138,6 +139,7 @@ function validCard(stamp: CheckedStamp, origin: Origin): HTMLElement {
           ),
         ),
       ),
+      h("p", { class: "compare" }, T.result.compare),
       stampText(stamp.text),
     ),
   );

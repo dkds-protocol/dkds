@@ -2,7 +2,8 @@
  * The `dkds` command.
  *
  * Exit status: 0 for success and for the outcome `valid`; 1 for every other outcome except
- * `unavailable`, and for a failed `record --check`; 2 for `unavailable`; 64 for incorrect usage.
+ * `unavailable`, and for a record of `record --check` or `check` that differs or is missing; 2 for
+ * `unavailable` and for a record that could not be retrieved; 64 for incorrect usage.
  */
 
 import { randomBytes } from "node:crypto";
@@ -10,13 +11,14 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { parseArgs, type ParseArgsConfig } from "node:util";
 import { createStamp } from "../create.ts";
 import { dohResolver, defaultResolver } from "../discovery/doh.ts";
-import { formatKeyRecord, selectKeyRecord } from "../discovery/record.ts";
+import { formatKeyRecord, parseKeyRecord, selectKeyRecord, type KeyRecord } from "../discovery/record.ts";
 import { combineResolvers, safeResolve, type Resolver } from "../discovery/resolver.ts";
 import { checkKeyId, lookupName, toAsciiDomain } from "../domain.ts";
 import { DkdsError } from "../errors.ts";
 import { inspectStamp } from "../inspect.ts";
 import { generateKey, publicKeyOf } from "../keys.ts";
 import { verifyStamp, type VerifyResult } from "../verify.ts";
+import { parseRecordFile, RecordFileError } from "./records.ts";
 import { createApiServer } from "./serve.ts";
 import { PACKAGE_VERSION } from "./version.ts";
 
@@ -28,11 +30,15 @@ const EXIT_USAGE = 64;
 const USAGE = `Usage: dkds <command> [options]
 
 Commands:
-  keygen --out <file>
-      Generate a key. Write the private key as PKCS#8 PEM; print the key record.
+  keygen --out <file> [--domain <domain> --key-id <id>]
+      Generate a key. Write the private key as PKCS#8 PEM; print the key record, with its DNS
+      name when --domain and --key-id are given.
   record --key <file> --domain <domain> --key-id <id> [--check]
   record --revoke --domain <domain> --key-id <id>
       Print the DNS record to publish. With --check, compare it with the published record.
+  check <file> [--resolver <url> ...]
+      Compare every key record in the file, one per line as printed by record, with the
+      published record.
   create --key <file> --domain <domain> --key-id <id>
          (--field <name>=<value> ... | --fields <file.json>) [--issued-at <time>] [--svg <file>]
       Create a stamp. Print its text form; write its QR code with --svg.
@@ -44,7 +50,8 @@ Commands:
       Start the local HTTP API. The token for /create is read from DKDS_TOKEN or generated.
 
 Times are Unix seconds or ISO 8601 with a time zone, for example 2026-09-30T09:00:00Z.
-Exit status: 0 success or valid; 1 not valid; 2 unavailable; 64 incorrect usage.
+Exit status: 0 success or valid; 1 not valid, or a record differs or is missing; 2 unavailable;
+64 incorrect usage.
 `;
 
 class UsageError extends Error {}
@@ -94,14 +101,45 @@ function print(line = ""): void {
   process.stdout.write(line + "\n");
 }
 
+/** A key record with its DNS name, in the form of a zone file, as `record` prints it and `check` reads it. */
+function recordLine(name: string, text: string): string {
+  return `${name}. TXT "${text}"`;
+}
+
+/** The published record at a lookup name, compared with the expected record. */
+type Comparison =
+  | { readonly state: "matches" }
+  | { readonly state: "differs"; readonly published: string }
+  | { readonly state: "missing" }
+  | { readonly state: "unavailable" };
+
+/**
+ * Retrieves the record at `name` and compares its algorithm and key with those of `expected`. A name
+ * without a usable record (7.3) is `missing`; a failed lookup is `unavailable`.
+ */
+async function compareRecord(resolver: Resolver, name: string, expected: KeyRecord): Promise<Comparison> {
+  const answer = await safeResolve(resolver, name);
+  if (answer.result === "failure") return { state: "unavailable" };
+  const published = answer.result === "answer" ? selectKeyRecord(answer.txt) : null;
+  if (published === null) return { state: "missing" };
+  return published.k === expected.k && published.p === expected.p ? { state: "matches" } : { state: "differs", published: published.text };
+}
+
 // ---- Commands ---------------------------------------------------------------------------------
 
 function keygen(args: string[]): number {
-  const { values } = parse(args, { out: { type: "string" } });
+  const { values } = parse(args, { out: { type: "string" }, domain: { type: "string" }, "key-id": { type: "string" } });
   const out = required(values.out, "out");
+  if ((values.domain === undefined) !== (values["key-id"] === undefined)) throw new UsageError("--domain and --key-id are given together.");
+  let name: string | undefined;
+  if (values.domain !== undefined) {
+    checkKeyId(values["key-id"]!);
+    name = lookupName(values["key-id"]!, toAsciiDomain(values.domain));
+  }
   const { privateKey, publicKey } = generateKey();
   writeFileSync(out, privateKey, { mode: 0o600, flag: "wx" });
-  print(formatKeyRecord(publicKey));
+  const text = formatKeyRecord(publicKey);
+  print(name === undefined ? text : recordLine(name, text));
   return EXIT_OK;
 }
 
@@ -120,19 +158,42 @@ async function record(args: string[]): Promise<number> {
   const name = lookupName(keyId, domain);
   if (values.revoke && values.key) throw new UsageError("--revoke and --key cannot be combined.");
   const text = formatKeyRecord(values.revoke ? null : publicKeyOf(readFileSync(required(values.key, "key"), "utf8")));
-  print(`${name}. TXT "${text}"`);
+  print(recordLine(name, text));
   if (!values.check) return EXIT_OK;
 
-  const answer = await safeResolve(resolverFrom(values.resolver), name);
-  if (answer.result === "failure") {
-    print(`No DNS answer was obtained for ${name}.`);
-    return EXIT_UNAVAILABLE;
+  const comparison = await compareRecord(resolverFrom(values.resolver), name, parseKeyRecord(text)!);
+  switch (comparison.state) {
+    case "matches":
+      print("The published record matches.");
+      return EXIT_OK;
+    case "differs":
+      print(`The published record differs: ${comparison.published}`);
+      return EXIT_NOT_VALID;
+    case "missing":
+      print(`No usable record is published at ${name}.`);
+      return EXIT_NOT_VALID;
+    case "unavailable":
+      print(`No DNS answer was obtained for ${name}.`);
+      return EXIT_UNAVAILABLE;
   }
-  const published = answer.result === "answer" ? selectKeyRecord(answer.txt) : null;
-  const expected = selectKeyRecord([[text]])!;
-  const matches = published !== null && published.k === expected.k && published.p === expected.p;
-  print(matches ? `The published record matches.` : published ? `The published record differs: ${published.text}` : `No usable record is published at ${name}.`);
-  return matches ? EXIT_OK : EXIT_NOT_VALID;
+}
+
+async function check(args: string[]): Promise<number> {
+  const { values, positionals } = parse(args, { resolver: { type: "string", multiple: true } }, 1);
+  const file = positionals[0];
+  if (file === undefined) throw new UsageError("A file of key records is required.");
+  let expected;
+  try {
+    expected = parseRecordFile(readFileSync(file, "utf8"));
+  } catch (e) {
+    if (e instanceof RecordFileError) throw new UsageError(`${file}, ${e.message}`);
+    throw e;
+  }
+  const resolver = resolverFrom(values.resolver);
+  const comparisons = await Promise.all(expected.map(({ name, record }) => compareRecord(resolver, name, record)));
+  comparisons.forEach((c, i) => print(`${c.state.padEnd(12)}${expected[i]!.name}${c.state === "differs" ? `: ${c.published}` : ""}`));
+  if (comparisons.some((c) => c.state === "differs" || c.state === "missing")) return EXIT_NOT_VALID;
+  return comparisons.some((c) => c.state === "unavailable") ? EXIT_UNAVAILABLE : EXIT_OK;
 }
 
 function readFields(values: { field?: string[]; fields?: string }): [string, string][] {
@@ -255,7 +316,7 @@ function serve(args: string[]): Promise<number> {
   });
 }
 
-const COMMANDS: Record<string, (args: string[]) => number | Promise<number>> = { keygen, record, create, verify, inspect, serve };
+const COMMANDS: Record<string, (args: string[]) => number | Promise<number>> = { keygen, record, check, create, verify, inspect, serve };
 
 /** Runs the command line and returns the exit status. */
 export async function main(argv: string[]): Promise<number> {

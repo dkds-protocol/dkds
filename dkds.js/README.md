@@ -60,10 +60,14 @@ procedure (specification 8.2) that determined it. `fields` is present only for `
 ### Presenting the result
 
 The result keeps the issuer's fields in `fields`, apart from the verifier's statements, as section
-9.1 of the specification requires of results returned to software. An application that displays the
-result to a person shows the outcome, the domain, the time of issue with its time zone, the DNSSEC
-status and the warnings, followed by the fields under a heading that identifies them as statements of
-the issuer.
+9.1 of the specification requires of results returned to software. `issuedAt` is the time of signing
+as stated by the signer.
+
+A system that compares the result with a document compares `domain`, the ASCII form, with the domain
+on record for the issuer, and each field with the value printed on the document. An application that
+displays the result to a person shows the outcome, the domain, the time of issue with its time zone,
+the DNSSEC status and the warnings, followed by the fields under a heading that identifies them as
+statements of the issuer.
 
 ## Creating a stamp
 
@@ -186,9 +190,10 @@ it and without any DNS query. It never returns the fields.
 ## Command-line tool
 
 ```
-dkds keygen --out key.pem
+dkds keygen --out key.pem [--domain northwind.example --key-id k2026]
 dkds record --key key.pem --domain northwind.example --key-id k2026 [--check]
 dkds record --revoke --domain northwind.example --key-id k2026
+dkds check records.txt
 dkds create --key key.pem --domain northwind.example --key-id k2026 \
             --field "Invoice no.=2026-0917" --field "Amount=4,812.50 EUR" --svg stamp.svg
 dkds verify "DKDS:..." [--json]
@@ -199,8 +204,21 @@ dkds serve [--key key.pem --domain northwind.example --key-id k2026]
 `dkds verify` and `dkds inspect` read the stamp from standard input when it is not given as an
 argument. Times are given as Unix seconds or in ISO 8601 with a time zone.
 
+`dkds record` prints a key record with its DNS name, in the form of a zone file:
+
+```
+k2026._dkds.northwind.example. TXT "v=DKDS1; k=ed25519; p=..."
+```
+
+`dkds keygen` prints the same line when given `--domain` and `--key-id`. `dkds check` reads a file of
+such lines, one record per line, and compares each with the published record. Lines may also carry a
+TTL and the class `IN` and split the record into several quoted strings, as in a zone file; empty
+lines and lines beginning with `;` or `#` are skipped. Each record is reported as `matches`,
+`differs` (followed by the published record), `missing` or `unavailable`.
+
 The exit status of `dkds verify` is 0 for `valid`, 2 for `unavailable`, and 1 for every other outcome.
-Incorrect usage gives 64.
+The exit status of `dkds check` is 0 when every record matches, 1 when a record differs or is missing,
+and 2 when a record could not be retrieved. Incorrect usage gives 64.
 
 ## Local HTTP API
 

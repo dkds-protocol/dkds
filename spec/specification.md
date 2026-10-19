@@ -3,6 +3,9 @@
 Status: final. Published 12 October 2026. Version 1 is not changed except to correct errors; changes
 to the protocol are made in a later version (section 11).
 
+Corrected 19 October 2026: sections 1 and 9.1 described the time of issue as established by a valid
+stamp; it is stated by the signer (section 12).
+
 Copyright 2026 Vince Lubbers. This specification is licensed under the Creative Commons Attribution 4.0
 International licence (CC BY 4.0).
 
@@ -16,8 +19,8 @@ key needed to check the signature is published in the DNS records of the issuer'
 can verify a stamp without an account, a registry or an intermediary.
 
 A valid stamp establishes that the holder of the domain signed the stamp, that its facts have not
-been altered since, and when it was signed. It does not establish that the facts are true, or that
-the document it is printed on matches it; the reader makes that comparison.
+been altered since, and the time of signing as stated by the signer. It does not establish that the
+facts are true, or that the document it is printed on matches it; the reader makes that comparison.
 
 ### 1.1 Conformance language
 
@@ -344,7 +347,8 @@ On `valid`, a verifier MUST present:
 5. any warnings (9.3);
 6. every field, in order, with names and values exactly as signed.
 
-Items 1 to 5 are the verifier's own statements; item 6 consists of statements of the issuer.
+Items 1, 2, 4 and 5 are the verifier's own statements. Item 3 is reported by the verifier and stated
+by the signer, who chooses it (section 12). Item 6 consists of statements of the issuer.
 
 A verifier that displays the result to a person MUST display these items in the order above, with the
 domain prominently. The verifier's statements MUST be visually distinct from the fields, and the
